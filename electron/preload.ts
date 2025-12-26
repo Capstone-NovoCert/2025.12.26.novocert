@@ -43,3 +43,9 @@ contextBridge.exposeInMainWorld('db', {
   deleteTask: (uuid: string) => ipcRenderer.invoke('db:deleteTask', uuid),
   deleteTasksByProject: (projectUuid: string) => ipcRenderer.invoke('db:deleteTasksByProject', projectUuid),
 })
+
+// Docker API 노출
+contextBridge.exposeInMainWorld('docker', {
+  checkInstalled: () => ipcRenderer.invoke('docker:checkInstalled'),
+  checkRunning: () => ipcRenderer.invoke('docker:checkRunning'),
+})

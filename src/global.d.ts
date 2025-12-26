@@ -19,9 +19,23 @@ interface DatabaseAPI {
   deleteTasksByProject: (projectUuid: string) => Promise<number>
 }
 
+interface DockerCheckResult {
+  installed?: boolean
+  running?: boolean
+  version?: string
+  info?: string
+  error?: string
+}
+
+interface DockerAPI {
+  checkInstalled: () => Promise<DockerCheckResult>
+  checkRunning: () => Promise<DockerCheckResult>
+}
+
 declare global {
   interface Window {
     db: DatabaseAPI
+    docker: DockerAPI
     ipcRenderer: {
       on(channel: string, func: (...args: any[]) => void): void
       off(channel: string, func: (...args: any[]) => void): void
