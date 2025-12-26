@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-
-interface Project {
-  uuid: string;
-  name: string;
-  status: string;
-  parameters: Record<string, any>;
-}
+import {
+  Project,
+  ProjectStatus,
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUS_COLORS,
+} from "../types";
 
 function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -19,7 +18,7 @@ function Dashboard() {
 
   const loadProjects = async () => {
     const data = await window.db.getProjects();
-    setProjects(data);
+    setProjects(data as Project[]);
   };
 
   const loadDbPath = async () => {
@@ -32,7 +31,7 @@ function Dashboard() {
 
     await window.db.addProject({
       name: newProjectName,
-      status: "pending",
+      status: "pending" as ProjectStatus,
       parameters: {},
     });
 
@@ -45,22 +44,9 @@ function Dashboard() {
     loadProjects();
   };
 
-  const updateProjectStatus = async (uuid: string, status: string) => {
+  const updateProjectStatus = async (uuid: string, status: ProjectStatus) => {
     await window.db.updateProject(uuid, { status });
     loadProjects();
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "in-progress":
-        return "bg-blue-100 text-blue-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
   };
 
   return (
@@ -163,15 +149,27 @@ function Dashboard() {
                       <select
                         value={project.status}
                         onChange={(e) =>
-                          updateProjectStatus(project.uuid, e.target.value)
+                          updateProjectStatus(
+                            project.uuid,
+                            e.target.value as ProjectStatus
+                          )
                         }
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                          project.status
-                        )} border-0 cursor-pointer`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          PROJECT_STATUS_COLORS[project.status]
+                        } border-0 cursor-pointer`}
                       >
-                        <option value="pending">대기</option>
-                        <option value="in-progress">진행중</option>
-                        <option value="completed">완료</option>
+                        <option value="pending">
+                          {PROJECT_STATUS_LABELS.pending}
+                        </option>
+                        <option value="running">
+                          {PROJECT_STATUS_LABELS.running}
+                        </option>
+                        <option value="failed">
+                          {PROJECT_STATUS_LABELS.failed}
+                        </option>
+                        <option value="success">
+                          {PROJECT_STATUS_LABELS.success}
+                        </option>
                       </select>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">

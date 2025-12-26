@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 
 // Database API 노출
 contextBridge.exposeInMainWorld('db', {
+  // Projects
   getProjects: () => ipcRenderer.invoke('db:getProjects'),
   getProject: (uuid: string) => ipcRenderer.invoke('db:getProject', uuid),
   addProject: (project: { name: string; status: string; parameters: Record<string, any> }) => 
@@ -30,4 +31,15 @@ contextBridge.exposeInMainWorld('db', {
     ipcRenderer.invoke('db:updateProject', uuid, updates),
   deleteProject: (uuid: string) => ipcRenderer.invoke('db:deleteProject', uuid),
   getDbPath: () => ipcRenderer.invoke('db:getDbPath'),
+  
+  // Tasks
+  getTasks: () => ipcRenderer.invoke('db:getTasks'),
+  getTasksByProject: (projectUuid: string) => ipcRenderer.invoke('db:getTasksByProject', projectUuid),
+  getTask: (uuid: string) => ipcRenderer.invoke('db:getTask', uuid),
+  addTask: (task: { project_uuid: string; step: string; status: string; parameters: Record<string, any> }) => 
+    ipcRenderer.invoke('db:addTask', task),
+  updateTask: (uuid: string, updates: { step?: string; status?: string; parameters?: Record<string, any> }) => 
+    ipcRenderer.invoke('db:updateTask', uuid, updates),
+  deleteTask: (uuid: string) => ipcRenderer.invoke('db:deleteTask', uuid),
+  deleteTasksByProject: (projectUuid: string) => ipcRenderer.invoke('db:deleteTasksByProject', projectUuid),
 })
