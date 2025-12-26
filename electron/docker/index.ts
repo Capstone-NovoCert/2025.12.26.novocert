@@ -12,4 +12,10 @@ export type { ImageStatus } from './images'
 export { getExtendedPath } from './utils'
 export { REQUIRED_IMAGES } from './config'
 export type { DockerImageConfig } from './config'
+export { 
+  runDockerContainer, 
+  runStep1Container, 
+  stopContainer, 
+  getContainerLogs 
+} from './executor'
 

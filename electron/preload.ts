@@ -52,3 +52,14 @@ contextBridge.exposeInMainWorld('docker', {
   downloadMissingImages: () => ipcRenderer.invoke('docker:downloadMissingImages'),
   pullImage: (imageName: string) => ipcRenderer.invoke('docker:pullImage', imageName),
 })
+
+// Step API 노출
+contextBridge.exposeInMainWorld('step', {
+  runStep1: (params: {
+    projectName: string
+    inputPath: string
+    param1: string
+    param2: string
+    outputPath: string
+  }) => ipcRenderer.invoke('step:runStep1', params),
+})

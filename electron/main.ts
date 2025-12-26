@@ -7,7 +7,8 @@ import {
   checkDockerRunning, 
   checkRequiredImages,
   downloadMissingImages,
-  pullImage
+  pullImage,
+  runStep1Container
 } from './docker'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -158,5 +159,89 @@ function setupIpcHandlers() {
 
   ipcMain.handle('db:deleteTasksByProject', async (_, projectUuid) => {
     return await database.tasks.deleteByProject(projectUuid)
+  })
+
+  // Step1 실행 핸들러
+  ipcMain.handle('step:runStep1', async (_, params: {
+    projectName: string
+    inputPath: string
+    param1: string
+    param2: string
+    outputPath: string
+  }) => {
+    try {
+      // 1. Project 생성
+      const project = await database.projects.create({
+        name: params.projectName,
+        status: 'running',
+        parameters: {
+          inputPath: params.inputPath,
+          param1: params.param1,
+          param2: params.param2,
+          outputPath: params.outputPath
+        }
+      })
+
+      console.log('Created project:', project)
+
+      // 2. Task 생성 (상태: running)
+      const task = await database.tasks.create({
+        project_uuid: project.uuid,
+        step: '1',
+        status: 'running',
+        parameters: {
+          inputPath: params.inputPath,
+          param1: params.param1,
+          param2: params.param2,
+          outputPath: params.outputPath
+        }
+      })
+
+      console.log('Created task:', task)
+
+      // 3. Docker 컨테이너 실행 (백그라운드)
+      const dockerResult = await runStep1Container(params)
+
+      if (!dockerResult.success) {
+        // Docker 실행 실패 시 Task 상태를 failed로 업데이트
+        await database.tasks.update(task.uuid, {
+          status: 'failed',
+          parameters: {
+            ...task.parameters,
+            error: dockerResult.error
+          }
+        })
+
+        return {
+          success: false,
+          error: dockerResult.error,
+          project,
+          task
+        }
+      }
+
+      console.log('Docker container started:', dockerResult.containerId)
+
+      // Task 상태 업데이트 - containerId 추가
+      await database.tasks.update(task.uuid, {
+        parameters: {
+          ...task.parameters,
+          containerId: dockerResult.containerId
+        }
+      })
+
+      return {
+        success: true,
+        project,
+        task,
+        containerId: dockerResult.containerId
+      }
+    } catch (error: any) {
+      console.error('Error in runStep1:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
   })
 }

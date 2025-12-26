@@ -49,6 +49,22 @@ interface DockerDownloadResult {
   error?: string
 }
 
+interface Step1Params {
+  projectName: string
+  inputPath: string
+  param1: string
+  param2: string
+  outputPath: string
+}
+
+interface Step1Result {
+  success: boolean
+  project?: Project
+  task?: Task
+  containerId?: string
+  error?: string
+}
+
 interface DockerAPI {
   checkInstalled: () => Promise<DockerCheckResult>
   checkRunning: () => Promise<DockerCheckResult>
@@ -57,10 +73,15 @@ interface DockerAPI {
   pullImage: (imageName: string) => Promise<{ success: boolean; output?: string; error?: string }>
 }
 
+interface StepAPI {
+  runStep1: (params: Step1Params) => Promise<Step1Result>
+}
+
 declare global {
   interface Window {
     db: DatabaseAPI
     docker: DockerAPI
+    step: StepAPI
     ipcRenderer: {
       on(channel: string, func: (...args: any[]) => void): void
       off(channel: string, func: (...args: any[]) => void): void
