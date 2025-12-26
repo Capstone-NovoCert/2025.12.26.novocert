@@ -10,6 +10,7 @@ export interface ImageStatus {
   image: string
   description: string
   exists: boolean
+  platform?: string
   error?: string
 }
 
@@ -43,13 +44,19 @@ export async function listImages(): Promise<{
 /**
  * Docker 이미지 다운로드
  */
-export async function pullImage(imageName: string): Promise<{
+export async function pullImage(
+  imageName: string, 
+  platform?: string
+): Promise<{
   success: boolean
   output?: string
   error?: string
 }> {
   try {
-    const { stdout } = await execAsync(`docker pull ${imageName}`, {
+    const platformOption = platform ? `--platform ${platform}` : ''
+    const command = `docker pull ${platformOption} ${imageName}`.trim()
+    
+    const { stdout } = await execAsync(command, {
       env: { ...process.env, PATH: getExtendedPath() }
     })
     
@@ -100,6 +107,7 @@ export async function checkRequiredImages(): Promise<{
         name: config.name,
         image: config.image,
         description: config.description,
+        platform: config.platform,
         exists: result.exists,
         error: result.error
       })
@@ -167,7 +175,7 @@ export async function downloadMissingImages(
         })
       }
       
-      const pullResult = await pullImage(imageInfo.image)
+      const pullResult = await pullImage(imageInfo.image, imageInfo.platform)
       
       // 다운로드 완료 알림
       if (onProgress) {

@@ -7,6 +7,7 @@ export interface DockerImageConfig {
   name: string        // 표시할 이름
   image: string       // 실제 이미지 이름 (예: nginx:latest)
   description: string // 설명
+  platform?: string   // 플랫폼 (예: linux/amd64, linux/arm64)
 }
 
 /**
@@ -16,17 +17,26 @@ export const REQUIRED_IMAGES: DockerImageConfig[] = [
   {
     name: 'Nginx',
     image: 'nginx:latest',
-    description: '웹 서버 및 리버스 프록시'
+    description: '웹 서버 및 리버스 프록시',
+    platform: 'linux/amd64'
   },
   {
     name: 'PostgreSQL',
     image: 'postgres:latest',
-    description: '관계형 데이터베이스'
+    description: '관계형 데이터베이스',
+    platform: 'linux/amd64'
   },
   {
     name: 'Redis',
     image: 'redis:latest',
-    description: '인메모리 데이터 저장소'
+    description: '인메모리 데이터 저장소',
+    platform: 'linux/amd64'
+  },
+  {
+    name: 'NovoCert Decoy Spectra',
+    image: 'ghcr.io/huswim/novocert-docker-1-decoy-spectra-generation:main',
+    description: 'Decoy Spectra 생성 도구',
+    platform: 'linux/amd64'
   }
 ]
 
