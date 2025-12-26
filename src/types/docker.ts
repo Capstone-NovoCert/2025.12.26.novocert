@@ -17,6 +17,8 @@ export interface DockerImageInfo {
   image: string;
   description: string;
   exists: boolean;
+  platform?: string;
+  step?: string;
   error?: string;
 }
 

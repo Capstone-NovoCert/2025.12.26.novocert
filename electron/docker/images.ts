@@ -11,6 +11,7 @@ export interface ImageStatus {
   description: string
   exists: boolean
   platform?: string
+  step?: string
   error?: string
 }
 
@@ -108,6 +109,7 @@ export async function checkRequiredImages(): Promise<{
         image: config.image,
         description: config.description,
         platform: config.platform,
+        step: config.step,
         exists: result.exists,
         error: result.error
       })

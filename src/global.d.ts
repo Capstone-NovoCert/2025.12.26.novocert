@@ -32,6 +32,8 @@ interface ImageStatus {
   image: string
   description: string
   exists: boolean
+  platform?: string
+  step?: string
   error?: string
 }
 
