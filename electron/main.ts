@@ -1,11 +1,14 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { exec } from 'node:child_process'
-import { promisify } from 'node:util'
 import { database } from './database'
-
-const execAsync = promisify(exec)
+import { 
+  checkDockerInstalled, 
+  checkDockerRunning, 
+  checkRequiredImages,
+  downloadMissingImages,
+  pullImage
+} from './docker'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -78,70 +81,6 @@ app.whenReady().then(async () => {
   createWindow()
 })
 
-// 확장된 PATH로 명령어 실행
-function getExtendedPath(): string {
-  const basePath = process.env.PATH || ''
-  
-  if (process.platform === 'win32') {
-    return basePath
-  }
-  
-  // macOS/Linux: 일반적인 Docker 설치 경로 추가
-  const additionalPaths = [
-    '/usr/local/bin',
-    '/usr/bin',
-    '/opt/homebrew/bin',
-    '/Applications/Docker.app/Contents/Resources/bin'
-  ]
-  
-  return `${basePath}:${additionalPaths.join(':')}`
-}
-
-// Docker 확인 함수들
-async function checkDockerInstalled(): Promise<{ installed: boolean; version?: string; error?: string }> {
-  try {
-    // which/where 명령어로 docker 실행 파일 찾기
-    const findCommand = process.platform === 'win32' ? 'where docker' : 'which docker'
-    
-    await execAsync(findCommand, {
-      env: { ...process.env, PATH: getExtendedPath() }
-    })
-    
-    // docker 찾았으면 버전 확인
-    const { stdout } = await execAsync('docker --version', {
-      env: { ...process.env, PATH: getExtendedPath() }
-    })
-    
-    return { installed: true, version: stdout.trim() }
-  } catch (error: any) {
-    return { 
-      installed: false, 
-      error: 'Docker가 설치되어 있지 않습니다.'
-    }
-  }
-}
-
-async function checkDockerRunning(): Promise<{ running: boolean; info?: string; error?: string }> {
-  try {
-    const { stdout } = await execAsync('docker info', {
-      env: { ...process.env, PATH: getExtendedPath() }
-    })
-    return { running: true, info: stdout.trim() }
-  } catch (error: any) {
-    // Docker는 설치되어 있지만 실행되지 않는 경우
-    if (error.message.includes('Cannot connect to the Docker daemon')) {
-      return {
-        running: false,
-        error: 'Docker가 실행되고 있지 않습니다. Docker Desktop을 실행해주세요.'
-      }
-    }
-    return {
-      running: false,
-      error: error.message || 'Docker 상태를 확인할 수 없습니다.'
-    }
-  }
-}
-
 // IPC 핸들러 설정
 function setupIpcHandlers() {
   // Docker handlers
@@ -151,6 +90,20 @@ function setupIpcHandlers() {
 
   ipcMain.handle('docker:checkRunning', async () => {
     return await checkDockerRunning()
+  })
+
+  ipcMain.handle('docker:checkRequiredImages', async () => {
+    return await checkRequiredImages()
+  })
+
+  ipcMain.handle('docker:downloadMissingImages', async (event) => {
+    return await downloadMissingImages((progress) => {
+      event.sender.send('docker:download-progress', progress)
+    })
+  })
+
+  ipcMain.handle('docker:pullImage', async (_, imageName: string) => {
+    return await pullImage(imageName)
   })
 
   // Project handlers

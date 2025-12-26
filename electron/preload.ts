@@ -48,4 +48,7 @@ contextBridge.exposeInMainWorld('db', {
 contextBridge.exposeInMainWorld('docker', {
   checkInstalled: () => ipcRenderer.invoke('docker:checkInstalled'),
   checkRunning: () => ipcRenderer.invoke('docker:checkRunning'),
+  checkRequiredImages: () => ipcRenderer.invoke('docker:checkRequiredImages'),
+  downloadMissingImages: () => ipcRenderer.invoke('docker:downloadMissingImages'),
+  pullImage: (imageName: string) => ipcRenderer.invoke('docker:pullImage', imageName),
 })

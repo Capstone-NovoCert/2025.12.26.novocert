@@ -27,9 +27,32 @@ interface DockerCheckResult {
   error?: string
 }
 
+interface ImageStatus {
+  name: string
+  image: string
+  description: string
+  exists: boolean
+  error?: string
+}
+
+interface DockerImagesResult {
+  success: boolean
+  images?: ImageStatus[]
+  error?: string
+}
+
+interface DockerDownloadResult {
+  success: boolean
+  results?: Array<{ image: string; success: boolean; error?: string }>
+  error?: string
+}
+
 interface DockerAPI {
   checkInstalled: () => Promise<DockerCheckResult>
   checkRunning: () => Promise<DockerCheckResult>
+  checkRequiredImages: () => Promise<DockerImagesResult>
+  downloadMissingImages: () => Promise<DockerDownloadResult>
+  pullImage: (imageName: string) => Promise<{ success: boolean; output?: string; error?: string }>
 }
 
 declare global {
