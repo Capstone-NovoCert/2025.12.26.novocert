@@ -7,7 +7,7 @@ import path from 'node:path'
  * Step1 (Decoy Spectra Generation)을 위한 Docker 컨테이너를 실행합니다.
  */
 export async function runStep1Container(params: Step1Params): Promise<DockerRunResult> {
-  const { projectName, inputPath, outputPath, uid, gid } = params
+  const { projectName, inputPath, outputPath, taskUuid, uid, gid } = params
 
   // Step1 이미지 찾기
   const step1Image = REQUIRED_IMAGES.find(img => img.step === 'step1')
@@ -26,7 +26,7 @@ export async function runStep1Container(params: Step1Params): Promise<DockerRunR
   const now = new Date()
   const dateStr = now.toISOString().split('T')[0]  // "2024-12-27"
   const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-')  // "14-30-45"
-  const logFilePath = path.join(outputPath, `step1-${dateStr}-${timeStr}.log`)
+  const logFilePath = path.join(outputPath, `step1_${taskUuid}_${dateStr}_${timeStr}.log`)
 
   // Docker 컨테이너 실행 (bind mount 사용)
   return await runDockerContainer({

@@ -8,7 +8,6 @@ import {
 
 function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [newProjectName, setNewProjectName] = useState("");
   const [dbPath, setDbPath] = useState("");
 
   useEffect(() => {
@@ -24,19 +23,6 @@ function Dashboard() {
   const loadDbPath = async () => {
     const path = await window.db.getDbPath();
     setDbPath(path);
-  };
-
-  const addProject = async () => {
-    if (!newProjectName) return;
-
-    await window.db.addProject({
-      name: newProjectName,
-      status: "pending" as ProjectStatus,
-      parameters: {},
-    });
-
-    setNewProjectName("");
-    loadProjects();
   };
 
   const deleteProject = async (uuid: string) => {
@@ -61,29 +47,6 @@ function Dashboard() {
         <p className="text-xs text-gray-600">
           <span className="font-semibold">DB 경로:</span> {dbPath}
         </p>
-      </div>
-
-      {/* 새 프로젝트 추가 */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          새 프로젝트 추가
-        </h2>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="프로젝트 이름"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && addProject()}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-          />
-          <button
-            onClick={addProject}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            추가
-          </button>
-        </div>
       </div>
 
       {/* 프로젝트 목록 */}

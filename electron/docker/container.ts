@@ -44,7 +44,10 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
   return new Promise((resolve) => {
     const args: string[] = ['run']
 
-    // Auto remove 옵션
+    // Detached 모드 (백그라운드 실행) - 항상 사용
+    args.push('-d')
+
+    // Auto remove 옵션 (detached 모드에서는 --rm 사용 가능)
     if (autoRemove) {
       args.push('--rm')
     }
@@ -82,21 +85,19 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
 
     console.log('Docker run command:', 'docker', args.join(' '))
 
-    // 로그 파일 스트림 생성
-    let logStream: fs.WriteStream | null = null
+    // 로그 파일 초기화
     if (logFilePath) {
-      // 로그 디렉토리가 없으면 생성
       const logDir = path.dirname(logFilePath)
       if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true })
       }
-      logStream = fs.createWriteStream(logFilePath, { flags: 'a' })
-      logStream.write(`=== Docker container started: ${containerName} ===\n`)
-      logStream.write(`Command: docker ${args.join(' ')}\n`)
-      logStream.write(`Timestamp: ${new Date().toISOString()}\n\n`)
+      // 로그 파일에 시작 정보 기록
+      fs.appendFileSync(logFilePath, `=== Docker container started: ${containerName} ===\n`)
+      fs.appendFileSync(logFilePath, `Command: docker ${args.join(' ')}\n`)
+      fs.appendFileSync(logFilePath, `Timestamp: ${new Date().toISOString()}\n\n`)
     }
 
-    // 확장된 PATH를 사용하여 docker 명령어 실행
+    // 확장된 PATH를 사용하여 docker 명령어 실행 (detached 모드)
     const dockerProcess = spawn('docker', args, {
       detached: false,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -109,49 +110,43 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
     let containerId = ''
     let errorOutput = ''
 
-    // stdout 수집 - 로그 파일에 저장
+    // stdout 수집 (컨테이너 ID만 받음)
     dockerProcess.stdout?.on('data', (data) => {
-      const output = data.toString()
-      containerId += output
-      
-      if (logStream) {
-        logStream.write(`[STDOUT] ${output}`)
-      } else {
-        console.log('Docker stdout:', output)
-      }
+      const output = data.toString().trim()
+      containerId = output
+      console.log('Container started:', containerId)
     })
 
-    // stderr 수집 - 로그 파일에 저장
+    // stderr 수집
     dockerProcess.stderr?.on('data', (data) => {
       const output = data.toString()
       errorOutput += output
-      
-      if (logStream) {
-        logStream.write(`[STDERR] ${output}`)
-      } else {
-        console.error('Docker stderr:', output)
-      }
+      console.error('Docker stderr:', output)
     })
 
-    // 프로세스 종료
+    // 프로세스 종료 (detached 모드에서는 컨테이너 ID를 받으면 바로 종료)
     dockerProcess.on('close', (code) => {
-      const message = `\n=== Docker container finished with exit code: ${code} ===\n`
-      
-      if (logStream) {
-        logStream.write(message)
-        logStream.end()
-      } else {
-        console.log(message)
-      }
-      
-      if (code === 0) {
+      if (code === 0 && containerId) {
+        // 컨테이너가 성공적으로 시작됨 - 즉시 return
+        console.log(`Container started in background: ${containerId}`)
+        
+        // 로그 수집을 백그라운드에서 시작
+        if (logFilePath) {
+          startLogCollection(containerId, logFilePath)
+        }
+        
         resolve({
           success: true,
-          containerId: containerId.trim(),
-          process: dockerProcess,
+          containerId: containerId,
           logFilePath
         })
       } else {
+        // 컨테이너 시작 실패
+        if (logFilePath) {
+          fs.appendFileSync(logFilePath, `\n=== Container start failed ===\n`)
+          fs.appendFileSync(logFilePath, `Error: ${errorOutput || `Docker exited with code ${code}`}\n`)
+        }
+        
         resolve({
           success: false,
           error: errorOutput || `Docker exited with code ${code}`,
@@ -163,12 +158,10 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
     // 프로세스 에러
     dockerProcess.on('error', (error) => {
       const message = `Docker process error: ${error.message}\n`
+      console.error(message)
       
-      if (logStream) {
-        logStream.write(message)
-        logStream.end()
-      } else {
-        console.error(message)
+      if (logFilePath) {
+        fs.appendFileSync(logFilePath, message)
       }
       
       resolve({
@@ -177,6 +170,38 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
         logFilePath
       })
     })
+  })
+}
+
+/**
+ * 백그라운드에서 컨테이너 로그를 수집하여 파일에 저장합니다.
+ */
+function startLogCollection(containerId: string, logFilePath: string) {
+  const logProcess = spawn('docker', ['logs', '-f', containerId], {
+    env: {
+      ...process.env,
+      PATH: getExtendedPath()
+    }
+  })
+
+  const logStream = fs.createWriteStream(logFilePath, { flags: 'a' })
+
+  logProcess.stdout?.on('data', (data) => {
+    logStream.write(`[STDOUT] ${data.toString()}`)
+  })
+
+  logProcess.stderr?.on('data', (data) => {
+    logStream.write(`[STDERR] ${data.toString()}`)
+  })
+
+  logProcess.on('close', (code) => {
+    logStream.write(`\n=== Container finished (exit code: ${code}) ===\n`)
+    logStream.end()
+  })
+
+  logProcess.on('error', (error) => {
+    logStream.write(`\n=== Log collection error: ${error.message} ===\n`)
+    logStream.end()
   })
 }
 

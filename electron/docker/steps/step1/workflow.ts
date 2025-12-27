@@ -44,6 +44,7 @@ export async function executeStep1Workflow(
       projectName: params.projectName,
       inputPath: params.inputPath,
       outputPath: params.outputPath,
+      taskUuid: task.uuid, // Task UUID 전달
       uid: params.uid,
       gid: params.gid
     })
