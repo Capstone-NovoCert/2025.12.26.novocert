@@ -5,7 +5,7 @@ import { Task, TASK_STATUS_LABELS, TASK_STATUS_COLORS } from "../types/task";
 
 interface ProjectDetailProps {
   uuid: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, uuid: string) => void;
 }
 
 function ProjectDetail({ uuid, onNavigate }: ProjectDetailProps) {
@@ -50,7 +50,7 @@ function ProjectDetail({ uuid, onNavigate }: ProjectDetailProps) {
       <div className="text-center py-12">
         <p className="text-red-500 font-semibold">{error}</p>
         <button
-          onClick={() => onNavigate("dashboard")}
+          onClick={() => onNavigate("dashboard", "")}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
           대시보드로 돌아가기
@@ -67,7 +67,7 @@ function ProjectDetail({ uuid, onNavigate }: ProjectDetailProps) {
     <div className="max-w-7xl mx-auto">
       <div className="mb-6">
         <button
-          onClick={() => onNavigate("dashboard")}
+          onClick={() => onNavigate("dashboard", "")}
           className="text-sm text-blue-600 hover:underline"
         >
           &larr; 대시보드로 돌아가기
@@ -138,8 +138,14 @@ function ProjectDetail({ uuid, onNavigate }: ProjectDetailProps) {
               <tbody className="bg-white divide-y divide-gray-200">
                 {tasks.map((task) => (
                   <tr key={task.uuid} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500" title={task.uuid}>
-                      {task.uuid.split("-")[0]}...
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                      <button
+                        onClick={() => onNavigate("task-detail", task.uuid)}
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        title={task.uuid}
+                      >
+                        {task.uuid.split("-")[0]}...
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{task.step}</td>
                     <td className="px-6 py-4 whitespace-nowrap">

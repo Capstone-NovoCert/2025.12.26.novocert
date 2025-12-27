@@ -9,7 +9,7 @@ interface MenuItem {
 
 interface SidebarProps {
   currentPage: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, uuid: string) => void;
 }
 
 const menuItems: MenuItem[] = [
@@ -48,7 +48,7 @@ function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     if (item?.subItems) {
       toggleSection(sectionId);
     } else {
-      onNavigate(sectionId);
+      onNavigate(sectionId, "");
     }
   };
 
@@ -103,7 +103,7 @@ function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                   {item.subItems.map((subItem) => (
                     <li key={subItem.id}>
                       <button
-                        onClick={() => onNavigate(subItem.id)}
+                        onClick={() => onNavigate(subItem.id, "")}
                         className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
                           currentPage === subItem.id
                             ? "bg-blue-600 text-white"

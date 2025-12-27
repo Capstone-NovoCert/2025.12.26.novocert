@@ -1,14 +1,23 @@
 import { useState } from "react";
 import { Layout } from "./components/layout";
-import { Dashboard, Prepare, Step1, ProjectDetail } from "./pages";
+import { Dashboard, Prepare, Step1, ProjectDetail, TaskDetail } from "./pages";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<string>("dashboard");
   const [currentProjectUuid, setCurrentProjectUuid] = useState<string | null>(null);
+  const [currentTaskUuid, setCurrentTaskUuid] = useState<string | null>(null);
 
-  const handleNavigate = (page: string, uuid: string | null = null) => {
+  const handleNavigate = (page: string, uuid: string) => {
     setCurrentPage(page);
-    setCurrentProjectUuid(uuid);
+    if (page === 'project-detail') {
+      setCurrentProjectUuid(uuid);
+      setCurrentTaskUuid(null);
+    } else if (page === 'task-detail') {
+      setCurrentTaskUuid(uuid);
+    } else {
+      setCurrentProjectUuid(null);
+      setCurrentTaskUuid(null);
+    }
   };
 
   const renderPage = () => {
@@ -33,7 +42,14 @@ function App() {
         if (currentProjectUuid) {
           return <ProjectDetail uuid={currentProjectUuid} onNavigate={handleNavigate} />;
         }
-        // uuid가 없으면 대시보드로 리디렉션
+        return <Dashboard onNavigate={handleNavigate} />;
+      case "task-detail":
+        if (currentTaskUuid) {
+          return <TaskDetail uuid={currentTaskUuid} onNavigate={handleNavigate} />;
+        }
+        if (currentProjectUuid) {
+          return <ProjectDetail uuid={currentProjectUuid} onNavigate={handleNavigate} />;
+        }
         return <Dashboard onNavigate={handleNavigate} />;
       default:
         return <Dashboard onNavigate={handleNavigate} />;

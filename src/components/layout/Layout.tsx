@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 interface LayoutProps {
   children: ReactNode;
   currentPage: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, uuid: string) => void;
 }
 
 function Layout({ children, currentPage, onNavigate }: LayoutProps) {
