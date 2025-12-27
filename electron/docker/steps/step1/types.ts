@@ -14,6 +14,7 @@ export interface DockerRunResult {
   success: boolean
   containerId?: string
   error?: string
+  logFilePath?: string  // 로그 파일 경로
 }
 
 export interface Step1Result {

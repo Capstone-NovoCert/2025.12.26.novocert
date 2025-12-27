@@ -1,5 +1,7 @@
 import { spawn, ChildProcess } from 'node:child_process'
 import { getExtendedPath } from './utils'
+import fs from 'node:fs'
+import path from 'node:path'
 
 interface DockerRunOptions {
   image: string
@@ -11,6 +13,7 @@ interface DockerRunOptions {
   command?: string[]
   platform?: string
   autoRemove?: boolean
+  logFilePath?: string  // 로그를 저장할 파일 경로 (옵션)
 }
 
 interface DockerRunResult {
@@ -18,6 +21,7 @@ interface DockerRunResult {
   containerId?: string
   error?: string
   process?: ChildProcess
+  logFilePath?: string  // 로그 파일 경로
 }
 
 /**
@@ -33,7 +37,8 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
     environment = {},
     command = [],
     platform,
-    autoRemove = true
+    autoRemove = true,
+    logFilePath
   } = options
 
   return new Promise((resolve) => {
@@ -77,6 +82,20 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
 
     console.log('Docker run command:', 'docker', args.join(' '))
 
+    // 로그 파일 스트림 생성
+    let logStream: fs.WriteStream | null = null
+    if (logFilePath) {
+      // 로그 디렉토리가 없으면 생성
+      const logDir = path.dirname(logFilePath)
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true })
+      }
+      logStream = fs.createWriteStream(logFilePath, { flags: 'a' })
+      logStream.write(`=== Docker container started: ${containerName} ===\n`)
+      logStream.write(`Command: docker ${args.join(' ')}\n`)
+      logStream.write(`Timestamp: ${new Date().toISOString()}\n\n`)
+    }
+
     // 확장된 PATH를 사용하여 docker 명령어 실행
     const dockerProcess = spawn('docker', args, {
       detached: false,
@@ -90,44 +109,72 @@ export async function runDockerContainer(options: DockerRunOptions): Promise<Doc
     let containerId = ''
     let errorOutput = ''
 
-    // stdout 수집
+    // stdout 수집 - 로그 파일에 저장
     dockerProcess.stdout?.on('data', (data) => {
       const output = data.toString()
-      console.log('Docker stdout:', output)
       containerId += output
+      
+      if (logStream) {
+        logStream.write(`[STDOUT] ${output}`)
+      } else {
+        console.log('Docker stdout:', output)
+      }
     })
 
-    // stderr 수집
+    // stderr 수집 - 로그 파일에 저장
     dockerProcess.stderr?.on('data', (data) => {
       const output = data.toString()
-      console.error('Docker stderr:', output)
       errorOutput += output
+      
+      if (logStream) {
+        logStream.write(`[STDERR] ${output}`)
+      } else {
+        console.error('Docker stderr:', output)
+      }
     })
 
     // 프로세스 종료
     dockerProcess.on('close', (code) => {
-      console.log(`Docker process exited with code ${code}`)
+      const message = `\n=== Docker container finished with exit code: ${code} ===\n`
+      
+      if (logStream) {
+        logStream.write(message)
+        logStream.end()
+      } else {
+        console.log(message)
+      }
       
       if (code === 0) {
         resolve({
           success: true,
           containerId: containerId.trim(),
-          process: dockerProcess
+          process: dockerProcess,
+          logFilePath
         })
       } else {
         resolve({
           success: false,
-          error: errorOutput || `Docker exited with code ${code}`
+          error: errorOutput || `Docker exited with code ${code}`,
+          logFilePath
         })
       }
     })
 
     // 프로세스 에러
     dockerProcess.on('error', (error) => {
-      console.error('Docker process error:', error)
+      const message = `Docker process error: ${error.message}\n`
+      
+      if (logStream) {
+        logStream.write(message)
+        logStream.end()
+      } else {
+        console.error(message)
+      }
+      
       resolve({
         success: false,
-        error: error.message
+        error: error.message,
+        logFilePath
       })
     })
   })
