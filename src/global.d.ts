@@ -61,11 +61,32 @@ interface DialogAPI {
   selectFolder: () => Promise<{ canceled: boolean; path: string | null }>
 }
 
+interface Step1Params {
+  projectName: string
+  inputPath: string
+  outputPath: string
+  uid?: string
+  gid?: string
+}
+
+interface Step1Result {
+  success: boolean
+  project?: Project
+  task?: Task
+  containerId?: string
+  error?: string
+}
+
+interface StepAPI {
+  runStep1: (params: Step1Params) => Promise<Step1Result>
+}
+
 declare global {
   interface Window {
     db: DatabaseAPI
     docker: DockerAPI
     dialog: DialogAPI
+    step: StepAPI
     ipcRenderer: {
       on(channel: string, func: (...args: unknown[]) => void): void
       off(channel: string, func: (...args: unknown[]) => void): void

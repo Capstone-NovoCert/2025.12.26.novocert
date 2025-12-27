@@ -4,7 +4,7 @@ import { taskTable } from './tasks'
 export type { Project } from './projects'
 export type { Task } from './tasks'
 
-class Database {
+export class Database {
   async init() {
     await projectTable.init()
     await taskTable.init()

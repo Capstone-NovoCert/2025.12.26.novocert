@@ -7,7 +7,8 @@ import {
   checkDockerRunning, 
   checkRequiredImages,
   downloadMissingImages,
-  pullImage
+  pullImage,
+  executeStep1Workflow
 } from './docker'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -175,5 +176,16 @@ function setupIpcHandlers() {
     }
     
     return { canceled: false, path: result.filePaths[0] }
+  })
+
+  // Step1 실행 핸들러
+  ipcMain.handle('step:runStep1', async (_, params: {
+    projectName: string
+    inputPath: string
+    outputPath: string
+    uid?: string
+    gid?: string
+  }) => {
+    return await executeStep1Workflow(database, params)
   })
 }

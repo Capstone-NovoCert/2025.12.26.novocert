@@ -57,3 +57,14 @@ contextBridge.exposeInMainWorld('docker', {
 contextBridge.exposeInMainWorld('dialog', {
   selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
 })
+
+// Step API 노출
+contextBridge.exposeInMainWorld('step', {
+  runStep1: (params: {
+    projectName: string
+    inputPath: string
+    outputPath: string
+    uid?: string
+    gid?: string
+  }) => ipcRenderer.invoke('step:runStep1', params),
+})
