@@ -5,6 +5,8 @@ export interface Project {
   name: string;
   status: ProjectStatus;
   parameters: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {

@@ -6,7 +6,11 @@ import {
   PROJECT_STATUS_COLORS,
 } from "../types";
 
-function Dashboard() {
+interface DashboardProps {
+  onNavigate: (page: string, uuid: string) => void;
+}
+
+function Dashboard({ onNavigate }: DashboardProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [dbPath, setDbPath] = useState("");
 
@@ -16,8 +20,10 @@ function Dashboard() {
   }, []);
 
   const loadProjects = async () => {
-    const data = await window.db.getProjects();
-    setProjects(data as Project[]);
+    const data = (await window.db.getProjects()) as Project[];
+    // created_at을 기준으로 내림차순 정렬
+    data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setProjects(data);
   };
 
   const loadDbPath = async () => {
@@ -26,6 +32,8 @@ function Dashboard() {
   };
 
   const deleteProject = async (uuid: string) => {
+    // 연관된 태스크도 함께 삭제
+    await window.db.deleteTasksByProject(uuid);
     await window.db.deleteProject(uuid);
     loadProjects();
   };
@@ -92,6 +100,12 @@ function Dashboard() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     상태
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    생성일
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    수정일
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     작업
                   </th>
@@ -101,7 +115,13 @@ function Dashboard() {
                 {projects.map((project) => (
                   <tr key={project.uuid} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                      {project.uuid.split("-")[0]}...
+                      <button
+                        onClick={() => onNavigate("project-detail", project.uuid)}
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        title={project.uuid}
+                      >
+                        {project.uuid.split("-")[0]}...
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
@@ -135,6 +155,12 @@ function Dashboard() {
                         </option>
                       </select>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {project.created_at ? new Date(project.created_at).toLocaleString() : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {project.updated_at ? new Date(project.updated_at).toLocaleString() : '-'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <button
                         onClick={() => deleteProject(project.uuid)}
@@ -155,3 +181,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+

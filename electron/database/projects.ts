@@ -10,6 +10,8 @@ export interface Project {
   name: string
   status: string
   parameters: Record<string, unknown>
+  created_at: string
+  updated_at: string
 }
 
 interface ProjectDatabase {
@@ -57,25 +59,36 @@ class ProjectTable {
     return this.db!.data.projects.find(p => p.uuid === uuid) || null
   }
 
-  async create(project: Omit<Project, 'uuid'>): Promise<Project> {
+  async create(project: Omit<Project, 'uuid' | 'created_at' | 'updated_at'>): Promise<Project> {
     await this.db!.read()
+    const now = new Date().toISOString()
     const newProject: Project = {
       uuid: randomUUID(),
-      ...project
+      ...project,
+      created_at: now,
+      updated_at: now
     }
     this.db!.data.projects.push(newProject)
     await this.db!.write()
     return newProject
   }
 
-  async update(uuid: string, updates: Partial<Omit<Project, 'uuid'>>): Promise<Project | null> {
+  async update(uuid: string, updates: Partial<Omit<Project, 'uuid' | 'created_at'>>): Promise<Project | null> {
     await this.db!.read()
     const project = this.db!.data.projects.find(p => p.uuid === uuid)
     if (!project) return null
     
-    Object.assign(project, updates)
+    const updatedProject = {
+      ...project,
+      ...updates,
+      updated_at: new Date().toISOString()
+    }
+
+    const index = this.db!.data.projects.findIndex(p => p.uuid === uuid)
+    this.db!.data.projects[index] = updatedProject
+    
     await this.db!.write()
-    return project
+    return updatedProject
   }
 
   async delete(uuid: string): Promise<boolean> {
