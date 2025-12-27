@@ -10,7 +10,7 @@ export interface Task {
   project_uuid: string
   step: string
   status: string
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
   created_at: string
   updated_at: string
 }

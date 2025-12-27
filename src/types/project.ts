@@ -4,7 +4,7 @@ export interface Project {
   uuid: string;
   name: string;
   status: ProjectStatus;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
 }
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {

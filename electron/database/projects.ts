@@ -9,7 +9,7 @@ export interface Project {
   uuid: string
   name: string
   status: string
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
 }
 
 interface ProjectDatabase {

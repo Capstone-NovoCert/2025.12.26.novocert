@@ -4,8 +4,8 @@ interface DatabaseAPI {
   // Projects
   getProjects: () => Promise<Project[]>
   getProject: (uuid: string) => Promise<Project | null>
-  addProject: (project: { name: string; status: ProjectStatus; parameters: Record<string, any> }) => Promise<Project>
-  updateProject: (uuid: string, updates: { name?: string; status?: ProjectStatus; parameters?: Record<string, any> }) => Promise<Project | null>
+  addProject: (project: { name: string; status: ProjectStatus; parameters: Record<string, unknown> }) => Promise<Project>
+  updateProject: (uuid: string, updates: { name?: string; status?: ProjectStatus; parameters?: Record<string, unknown> }) => Promise<Project | null>
   deleteProject: (uuid: string) => Promise<boolean>
   getDbPath: () => Promise<string>
   
@@ -13,8 +13,8 @@ interface DatabaseAPI {
   getTasks: () => Promise<Task[]>
   getTasksByProject: (projectUuid: string) => Promise<Task[]>
   getTask: (uuid: string) => Promise<Task | null>
-  addTask: (task: { project_uuid: string; step: string; status: TaskStatus; parameters: Record<string, any> }) => Promise<Task>
-  updateTask: (uuid: string, updates: { step?: string; status?: TaskStatus; parameters?: Record<string, any> }) => Promise<Task | null>
+  addTask: (task: { project_uuid: string; step: string; status: TaskStatus; parameters: Record<string, unknown> }) => Promise<Task>
+  updateTask: (uuid: string, updates: { step?: string; status?: TaskStatus; parameters?: Record<string, unknown> }) => Promise<Task | null>
   deleteTask: (uuid: string) => Promise<boolean>
   deleteTasksByProject: (projectUuid: string) => Promise<number>
 }
@@ -57,15 +57,20 @@ interface DockerAPI {
   pullImage: (imageName: string) => Promise<{ success: boolean; output?: string; error?: string }>
 }
 
+interface DialogAPI {
+  selectFolder: () => Promise<{ canceled: boolean; path: string | null }>
+}
+
 declare global {
   interface Window {
     db: DatabaseAPI
     docker: DockerAPI
+    dialog: DialogAPI
     ipcRenderer: {
-      on(channel: string, func: (...args: any[]) => void): void
-      off(channel: string, func: (...args: any[]) => void): void
-      send(channel: string, ...args: any[]): void
-      invoke(channel: string, ...args: any[]): Promise<any>
+      on(channel: string, func: (...args: unknown[]) => void): void
+      off(channel: string, func: (...args: unknown[]) => void): void
+      send(channel: string, ...args: unknown[]): void
+      invoke(channel: string, ...args: unknown[]): Promise<unknown>
     }
   }
 }

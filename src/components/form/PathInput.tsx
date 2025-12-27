@@ -5,18 +5,27 @@ interface PathInputProps {
   placeholder?: string;
   required?: boolean;
   description?: string;
-  onBrowse?: () => void;
 }
 
 function PathInput({
   label,
   value,
   onChange,
-  placeholder = "/path/to/file",
+  placeholder = "/path/to/folder",
   required = false,
   description,
-  onBrowse,
 }: PathInputProps) {
+  const handleBrowse = async () => {
+    try {
+      const result = await window.dialog.selectFolder();
+      if (!result.canceled && result.path) {
+        onChange(result.path);
+      }
+    } catch (error) {
+      console.error('폴더 선택 중 오류 발생:', error);
+    }
+  };
+
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -32,7 +41,7 @@ function PathInput({
           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
         />
         <button
-          onClick={onBrowse}
+          onClick={handleBrowse}
           type="button"
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
         >

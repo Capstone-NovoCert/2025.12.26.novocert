@@ -25,9 +25,9 @@ contextBridge.exposeInMainWorld('db', {
   // Projects
   getProjects: () => ipcRenderer.invoke('db:getProjects'),
   getProject: (uuid: string) => ipcRenderer.invoke('db:getProject', uuid),
-  addProject: (project: { name: string; status: string; parameters: Record<string, any> }) => 
+  addProject: (project: { name: string; status: string; parameters: Record<string, unknown> }) => 
     ipcRenderer.invoke('db:addProject', project),
-  updateProject: (uuid: string, updates: { name?: string; status?: string; parameters?: Record<string, any> }) => 
+  updateProject: (uuid: string, updates: { name?: string; status?: string; parameters?: Record<string, unknown> }) => 
     ipcRenderer.invoke('db:updateProject', uuid, updates),
   deleteProject: (uuid: string) => ipcRenderer.invoke('db:deleteProject', uuid),
   getDbPath: () => ipcRenderer.invoke('db:getDbPath'),
@@ -36,9 +36,9 @@ contextBridge.exposeInMainWorld('db', {
   getTasks: () => ipcRenderer.invoke('db:getTasks'),
   getTasksByProject: (projectUuid: string) => ipcRenderer.invoke('db:getTasksByProject', projectUuid),
   getTask: (uuid: string) => ipcRenderer.invoke('db:getTask', uuid),
-  addTask: (task: { project_uuid: string; step: string; status: string; parameters: Record<string, any> }) => 
+  addTask: (task: { project_uuid: string; step: string; status: string; parameters: Record<string, unknown> }) => 
     ipcRenderer.invoke('db:addTask', task),
-  updateTask: (uuid: string, updates: { step?: string; status?: string; parameters?: Record<string, any> }) => 
+  updateTask: (uuid: string, updates: { step?: string; status?: string; parameters?: Record<string, unknown> }) => 
     ipcRenderer.invoke('db:updateTask', uuid, updates),
   deleteTask: (uuid: string) => ipcRenderer.invoke('db:deleteTask', uuid),
   deleteTasksByProject: (projectUuid: string) => ipcRenderer.invoke('db:deleteTasksByProject', projectUuid),
@@ -51,4 +51,9 @@ contextBridge.exposeInMainWorld('docker', {
   checkRequiredImages: () => ipcRenderer.invoke('docker:checkRequiredImages'),
   downloadMissingImages: () => ipcRenderer.invoke('docker:downloadMissingImages'),
   pullImage: (imageName: string) => ipcRenderer.invoke('docker:pullImage', imageName),
+})
+
+// Dialog API 노출
+contextBridge.exposeInMainWorld('dialog', {
+  selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
 })

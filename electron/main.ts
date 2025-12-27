@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { database } from './database'
@@ -158,5 +158,22 @@ function setupIpcHandlers() {
 
   ipcMain.handle('db:deleteTasksByProject', async (_, projectUuid) => {
     return await database.tasks.deleteByProject(projectUuid)
+  })
+
+  // Dialog 핸들러 - 폴더 선택
+  ipcMain.handle('dialog:selectFolder', async () => {
+    if (!win) {
+      return { canceled: true, path: null }
+    }
+    
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory', 'createDirectory']
+    })
+    
+    if (result.canceled || result.filePaths.length === 0) {
+      return { canceled: true, path: null }
+    }
+    
+    return { canceled: false, path: result.filePaths[0] }
   })
 }
